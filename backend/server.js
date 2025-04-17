@@ -4,8 +4,38 @@ const redis = require("redis");
 require("dotenv").config();
 
 const app = express();
+
+// prometheus client
+const client = require("prom-client");
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics();
+
+const httpRequestDurationMicroseconds = new client.Histogram({
+  name: "http_request_duration_ms",
+  help: "Duration of HTTP requests in ms",
+  labelNames: ["method", "route", "code"],
+  buckets: [50, 100, 200, 300, 400, 500, 1000],
+});
+
 app.use(express.json());
 app.use(require("cors")());
+
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    httpRequestDurationMicroseconds
+      .labels(req.method, req.originalUrl, res.statusCode)
+      .observe(duration);
+  });
+  next();
+});
+
+// prometheus metrics endpoint
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", client.register.contentType);
+  res.end(await client.register.metrics());
+});
 
 const mongoURI = process.env.MONGO_URI;
 
