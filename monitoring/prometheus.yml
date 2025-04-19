@@ -1,6 +1,9 @@
 global:
   scrape_interval: 30s
 
+rule_files:
+  - "alert.rules.yml"
+
 scrape_configs:
   - job_name: "node-exporter"
     static_configs:
@@ -17,3 +20,8 @@ scrape_configs:
   - job_name: "your-backend"
     static_configs:
       - targets: ["backend:3000"]
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
