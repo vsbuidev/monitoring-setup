@@ -1,15 +1,15 @@
 global:
-  resolve_timeout: 5m
+  smtp_smarthost: "smtp.gmail.com:587"
+  smtp_from: "yourname@gmail.com"
+  smtp_auth_username: "yourname@gmail.com"
+  smtp_auth_password: "your_app_password"
+  smtp_require_tls: true
 
 route:
-  receiver: "default"
+  receiver: "email-alert"
 
 receivers:
-  - name: "default"
+  - name: "email-alert"
     email_configs:
-      - to: "yogeshak472@email.com"
-        from: "alertmanager@yourdomain.com"
-        smarthost: "smtp.your-email-provider.com:587"
-        auth_username: "your@email.com"
-        auth_identity: "your@email.com"
-        auth_password: "your-email-password"
+      - to: "yourname@gmail.com"
+        send_resolved: true
