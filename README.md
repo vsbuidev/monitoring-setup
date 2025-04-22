@@ -1,149 +1,137 @@
-# Multi-Service Monolithic Application Deployed with Docker
+# Multi-Service App Monitoring Stack with Prometheus, Grafana, Loki & Alertmanager
 
-This is a basic full-stack CRUD application demonstrating on how to set up a **Multi-service monolithic architectured application** using Docker. The app features a **React frontend** (built with Vite), a **Node.js backend** (Express), **MongoDB** for data storage, **Redis** for caching, and an **Nginx reverse proxy** to handle requests. This project is a demonstration of how to orchestrate multiple services using Docker Compose.
+This project implements a full-stack web application and a robust observability pipeline using:
 
----
+- **Prometheus** for metrics scraping
+- **Grafana** for visualization
+- **Alertmanager** for alerts
+- **Loki + Promtail** for log aggregation
+- **Docker Compose** to orchestrate everything
 
-## **Project Structure**
+## Project Structure
 
 ```
-multi-service-app/
-│── frontend/         # React (Vite) App
-│── backend/          # Node.js + Express API
-│── database/         # MongoDB (Docker volume)
-│── cache/            # Redis setup
-│── proxy/            # Nginx reverse proxy
-│── docker-compose.yml
-│── .env              # Environment variables
+.
+├── frontend/               # Vite-based app
+├── backend/                # Node.js api
+|── cache/                  # Redis cache
+├── db/                     # MongoDB data
+├── proxy/                  # Nginx reverse proxy
+├── monitoring/
+│   ├── prometheus.yml      # Prometheus scrape config
+│   └── alertmanager.yml    # Alertmanager rules
+|   └── alert.rules.yml     # Alertmanager rules
+├── loki/
+│   ├── loki-config.yml     # Loki configuration
+│   └── promtail-config.yml # Promtail configuration
+|── Screenshots             # screenshots of Grafana dashboards
+├── docker-compose.yml
 ```
 
 ---
 
-## **Features**
+## Services Overview
 
-- **Frontend:** React + Vite for a fast, modern front-end development experience.
-- **Backend:** Node.js with Express for handling API requests.
-- **MongoDB:** For persistent database storage (user details: name, email).
-- **Redis:** For caching user data to improve performance.
-- **Nginx:** Reverse proxy for routing traffic to the correct service.
-- **Docker Compose:** To manage multi-container applications efficiently.
-
----
-
-## **Tech Stack**
-
-- **React** with **Vite** (Frontend)
-- **Node.js** + **Express** (Backend)
-- **MongoDB** (Database)
-- **Redis** (Cache)
-- **Nginx** (Reverse Proxy)
-- **Docker** (Containers)
-- **Docker Compose** (Orchestration)
+| Service          | Description                                | Port  |
+| ---------------- | ------------------------------------------ | ----- |
+| `frontend`       | Vite frontend app                          | 5173  |
+| `backend`        | Node.js API connected to MongoDB and Redis | 5000  |
+| `proxy`          | Nginx reverse proxy                        | 80    |
+| `database`       | MongoDB database                           | 27017 |
+| `cache`          | Redis key-value store                      | 6379  |
+| `prometheus`     | Metrics scraping and alert evaluation      | 9090  |
+| `grafana`        | Dashboards & visualizations                | 3000  |
+| `alertmanager`   | Alert delivery via email/Slack/etc.        | 9093  |
+| `loki`           | Log aggregator                             | 3100  |
+| `promtail`       | Log shipper for containers                 | 9080  |
+| `mongo-exporter` | Exposes MongoDB metrics for Prometheus     | 9216  |
+| `redis-exporter` | Exposes Redis metrics for Prometheus       | 9121  |
+| `node-exporter`  | Host-level system metrics                  | 9100  |
 
 ---
 
-## **Getting Started**
+## Prerequisites
 
-### **1. Clone the Repository**
-
-```bash
-git clone https://github.com/<your-username>/docker-multi-service-app.git
-cd docker-multi-service-app
-```
-
-### **2. Environment Setup**
-
-Create a `.env` file in the root of the `backend` directory with the following:
-
-```bash
-MONGO_URI=mongodb://admin:password@database:27017/mydatabase?authSource=admin
-REDIS_URL=redis://cache:6379
-```
-
-### **3. Build and Run the Application**
-
-To build and start all services (frontend, backend, MongoDB, Redis, Nginx) using Docker Compose:
-
-```bash
-docker-compose up --build
-```
-
-The application should be accessible at:
-
-- **Frontend:** `http://localhost:3000`
-- **API:** `http://localhost:5000/api/users`
-- **Nginx Proxy:** `http://localhost`
-
-### **4. CRUD Operations**
-
-- **Create a User:**
-  - Endpoint: `POST /api/users`
-  - Payload: `{ "name": "John Doe", "email": "john@example.com" }`
-- **Get All Users:**
-  - Endpoint: `GET /api/users`
-- **Update a User:**
-
-  - Endpoint: `PUT /api/users/:id`
-  - Payload: `{ "name": "John Smith", "email": "johnsmith@example.com" }`
-
-- **Delete a User:**
-  - Endpoint: `DELETE /api/users/:id`
+- Docker & Docker Compose installed
+- Optional: `.env` file for Alertmanager SMTP settings:
+  ```
+  SMTP_USERNAME=your@email.com
+  SMTP_PASSWORD=your-app-password
+  ```
 
 ---
 
-## **Project Structure Overview**
+## How to Run
 
-- **Frontend (React + Vite):**
+1. **Clone the repo**
 
-  - `frontend/src/App.jsx` handles the UI and makes API requests to the backend.
+   ```bash
+   git clone https://github.com/vsbuidev/monitoring-setup.git
+   cd monitoring-setup
+   ```
 
-- **Backend (Node.js + Express):**
+2. **Build and run the stack**
 
-  - `backend/server.js` provides API routes for CRUD operations using MongoDB.
+   ```bash
+   docker compose up -d --build
+   ```
 
-- **MongoDB:**
-
-  - Stores user data (name, email).
-
-- **Redis:**
-
-  - Caches the list of users for 60 seconds to optimize read performance.
-
-- **Nginx:**
-  - Acts as a reverse proxy, routing traffic between the frontend and backend.
-
----
-
-## **Docker Setup**
-
-The services are defined in the `docker-compose.yml` file:
-
-- **Frontend:** React app running on port `3000`.
-- **Backend:** Node.js API running on port `5000`.
-- **MongoDB:** Exposed on port `27017`.
-- **Redis:** Exposed on port `6379`.
-- **Nginx:** Exposed on port `80`, acting as a reverse proxy.
+3. **Access Services:**
+   - Frontend: http://localhost:5173
+   - Backend: http://localhost:5000
+   - Grafana: http://localhost:3000 (default user: `admin` / `admin`)
+   - Prometheus: http://localhost:9090
+   - Alertmanager: http://localhost:9093
+   - Loki Logs (via Grafana Explore tab)
 
 ---
 
-## **How to Contribute**
+## Observability Setup
 
-If you'd like to contribute to this project, please fork the repository and use a feature branch. Pull requests are warmly welcome.
+### Metrics Collection
 
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a pull request
+- **Prometheus** scrapes metrics from:
+  - `node-exporter`: system metrics
+  - `redis-exporter`, `mongo-exporter`: DB metrics
+  - Custom app metrics (if instrumented)
+
+### Dashboards
+
+- Import dashboards from [Grafana.com](https://grafana.com/grafana/dashboards)
+  - Node Exporter Full: ID `1860`
+  - MongoDB: ID `2583`
+  - Redis: ID `11835`
+  - Loki: ID `11559`
+
+### Alerts
+
+- Alert rules in `monitoring/alertmanager.yml`
+- Email notifications via SMTP (Gmail or custom)
+
+### Logs
+
+- **Promtail** ships logs from Docker containers
+- **Loki** stores and indexes logs
+- Explore logs in Grafana (`Explore` tab)
 
 ---
 
-## **License**
+## Troubleshooting
 
-Distributed under the MIT License. See `LICENSE` for more information.
+- If Email not sending.? Ensure your SMTP credentials are valid and [App Passwords](https://myaccount.google.com/apppasswords) are enabled for Gmail if used.
 
 ---
 
-## **Acknowledgements**
+## Improvements
 
-Special thanks to all the open-source libraries and tools used in this project. and this project is based on the [DevOps Roadmap's Project](https://roadmap.sh/projects/multiservice-docker)
+- To add custom application metrics using `prom-client`
+- Set up Slack / Discord alert routing
+- Configure recording rules for Prometheus
+- Automate provisioning with Terraform/Ansible
+- Create prebuilt Grafana dashboards with provisioning
+
+---
+
+## Attribution
+
+- This project is based on the roadmap provided in the [DevOps Roadmap Project](https://roadmap.sh/projects/monitoring)
