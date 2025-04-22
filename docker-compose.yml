@@ -60,10 +60,15 @@ services:
   alertmanager:
     image: prom/alertmanager
     container_name: alertmanager
-    volumes:
-      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
     ports:
       - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    environment:
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
 
   node-exporter:
     image: prom/node-exporter
@@ -81,11 +86,31 @@ services:
     image: percona/mongodb_exporter:0.40.0
     container_name: mongo-exporter
     environment:
-      MONGODB_URI: "mongodb://your_mongo_user:your_mongo_password@mongodb:27017"
+      MONGODB_URI: "mongodb://admin:password@mongodb:27017"
     ports:
       - "9216:9216"
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    restart: unless-stopped
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml
+      - loki-data:/etc/loki
+    command: -config.file=/etc/loki/loki-config.yml
+    user: 1000:1000
+
+  promtail:
+    image: grafana/promtail:2.9.2
+    container_name: promtail
+    volumes:
+      - /var/log:/var/log
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./loki/promtail-config.yml:/etc/promtail/promtail-config.yml
+    command: -config.file=/etc/promtail/promtail-config.yml
 
 volumes:
   mongo-data:
   redis-data:
   grafana-storage:
+  loki-data:
